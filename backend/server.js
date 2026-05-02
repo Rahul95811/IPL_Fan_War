@@ -59,6 +59,11 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "ipl-fan-war-backend" });
 });
 
+app.get("/", (req, res) => {
+  res.send("API Running...");
+});
+
+
 app.use("/api/auth", authRoutes);
 app.use("/api/matches", matchRoutes);
 app.use("/api/vote", voteRoutes);
