@@ -75,16 +75,16 @@ const guestLogin = async (req, res, next) => {
       return res.status(400).json({ message: "Username is required" });
     }
 
-    // Find or create guest user
-    let user = await User.findOne({ username: safeName });
-    if (!user) {
-      // Create with a dummy email and random password
-      user = await User.create({
-        username: safeName,
-        email: `${safeName.toLowerCase()}_guest@iplfanwar.com`,
-        password: await bcrypt.hash(Math.random().toString(36), 10),
-      });
-    }
+    // Generate a unique username and email for every guest login
+    const uniqueSuffix = Math.floor(1000 + Math.random() * 9000);
+    const guestUsername = `${safeName}#${uniqueSuffix}`;
+    const guestEmail = `guest_${Date.now()}_${uniqueSuffix}@iplfanwar.com`;
+
+    const user = await User.create({
+      username: guestUsername,
+      email: guestEmail,
+      password: await bcrypt.hash(Math.random().toString(36), 10),
+    });
 
     return res.json({
       token: createToken(user),
