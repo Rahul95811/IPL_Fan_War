@@ -120,32 +120,47 @@ function ChatPanel({ matchId }) {
             <p className="text-xs text-slate-500 sm:text-sm">No messages yet. Start the fan war!</p>
           </div>
         ) : (
-          messages.map((msg, index) => (
-            <div key={`${msg.timestamp}-${index}`} className="flex items-start gap-2 sm:gap-3">
-              <img src={`https://ui-avatars.com/api/?name=${msg.username}&background=0f172a&color=22d3ee`} alt="avatar" className="mt-1 h-6 w-6 shrink-0 rounded-full border border-slate-700 shadow-sm sm:h-8 sm:w-8" />
-              <div className="flex-1 rounded-2xl rounded-tl-none border border-slate-700 bg-slate-800 p-2.5 shadow-sm sm:p-3.5">
-                <div className="flex items-baseline justify-between mb-1">
-                  <p className="text-xs font-bold text-cyan-300 sm:text-sm">{msg.username}</p>
-                  <p className="text-[9px] font-medium text-slate-500 sm:text-[10px]">{getTimeAgo(msg.timestamp)}</p>
-                </div>
-                <p className="text-xs leading-relaxed text-slate-200 sm:text-sm">{msg.message}</p>
-                <div className="mt-1.5 sm:mt-2 flex gap-3">
-                  <button 
-                    onClick={() => reactToMessage(msg._id || msg.id, 'thumbsUp')}
-                    className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-cyan-400 sm:text-[10px]"
-                  >
-                    <span className="text-xs sm:text-sm">👍</span> {msg.reactions?.thumbsUp || 0}
-                  </button>
-                  <button 
-                    onClick={() => reactToMessage(msg._id || msg.id, 'fire')}
-                    className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-amber-400 sm:text-[10px]"
-                  >
-                    <span className="text-xs sm:text-sm">🔥</span> {msg.reactions?.fire || 0}
-                  </button>
+          messages.map((msg, index) => {
+            const isOwnMessage = msg.username === user?.username;
+            return (
+              <div key={`${msg.timestamp}-${index}`} className={`flex items-start gap-2 sm:gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                <img 
+                  src={`https://ui-avatars.com/api/?name=${msg.username}&background=${isOwnMessage ? '6366f1' : '0f172a'}&color=ffffff`} 
+                  alt="avatar" 
+                  className="mt-1 h-6 w-6 shrink-0 rounded-full border border-slate-700 shadow-sm sm:h-8 sm:w-8" 
+                />
+                <div className={`flex-1 rounded-2xl border border-slate-700 p-2.5 shadow-sm sm:p-3.5 ${
+                  isOwnMessage 
+                    ? 'rounded-tr-none bg-indigo-950/40 border-indigo-500/30' 
+                    : 'rounded-tl-none bg-slate-800'
+                }`}>
+                  <div className={`flex items-baseline justify-between mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                    <p className={`text-xs font-bold sm:text-sm ${isOwnMessage ? 'text-indigo-300' : 'text-cyan-300'}`}>
+                      {isOwnMessage ? 'You' : msg.username}
+                    </p>
+                    <p className="text-[9px] font-medium text-slate-500 sm:text-[10px]">{getTimeAgo(msg.timestamp)}</p>
+                  </div>
+                  <p className={`text-xs leading-relaxed sm:text-sm ${isOwnMessage ? 'text-slate-100 text-right' : 'text-slate-200'}`}>
+                    {msg.message}
+                  </p>
+                  <div className={`mt-1.5 sm:mt-2 flex gap-3 ${isOwnMessage ? 'justify-end' : ''}`}>
+                    <button 
+                      onClick={() => reactToMessage(msg._id || msg.id, 'thumbsUp')}
+                      className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-cyan-400 sm:text-[10px]"
+                    >
+                      <span className="text-xs sm:text-sm">👍</span> {msg.reactions?.thumbsUp || 0}
+                    </button>
+                    <button 
+                      onClick={() => reactToMessage(msg._id || msg.id, 'fire')}
+                      className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-amber-400 sm:text-[10px]"
+                    >
+                      <span className="text-xs sm:text-sm">🔥</span> {msg.reactions?.fire || 0}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={chatEndRef} />
       </div>
