@@ -93,8 +93,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("send_message", async ({ matchId, message }) => {
-    if (!matchId || !message || socket.data.matchId !== matchId) {
+  socket.on("send_message", async ({ matchId: incomingId, message }) => {
+    if (!incomingId || !message || socket.data.matchId != incomingId) {
+      console.log("Message dropped:", { incomingId, savedId: socket.data.matchId });
       return;
     }
 

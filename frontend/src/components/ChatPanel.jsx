@@ -19,11 +19,15 @@ function ChatPanel({ matchId }) {
     socket.emit("join_match", { matchId, username: user.username });
     const receiveHandler = (payload) => setMessages((prev) => [...prev, payload]);
     const historyHandler = (history) => setMessages(history);
-    const errorHandler = (payload) => setError(payload?.message || "Chat error");
-
+    
+    socket.on("connect", () => console.log("Socket connected:", socket.id));
+    socket.on("connect_error", (err) => console.error("Socket connection error:", err));
     socket.on("receive_message", receiveHandler);
     socket.on("chat_history", historyHandler);
-    socket.on("chat_error", errorHandler);
+    socket.on("chat_error", (payload) => {
+      console.error("Chat error:", payload);
+      setError(payload?.message || "Chat error");
+    });
 
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
