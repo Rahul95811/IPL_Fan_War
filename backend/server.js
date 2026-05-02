@@ -134,7 +134,7 @@ io.on("connection", (socket) => {
       });
     } catch (error) {
       console.error("Failed to save chat:", error);
-      socket.emit("chat_error", { message: "Failed to send message." });
+      socket.emit("chat_error", { message: `Failed to send message: ${error.message}` });
     }
   });
 
