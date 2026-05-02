@@ -12,22 +12,44 @@ function ChatPanel({ matchId }) {
   const chatEndRef = useRef(null);
   const dropdownRef = useRef(null);
 
+  const [connected, setConnected] = useState(socket.connected);
+
   useEffect(() => {
     if (!matchId || !user?.username) return undefined;
     if (!socket.connected) socket.connect();
 
-    socket.emit("join_match", { matchId, username: user.username });
+    const onConnect = () => {
+      setConnected(true);
+      console.log("Socket connected:", socket.id);
+      socket.emit("join_match", { matchId, username: user.username });
+    };
+
+    const onDisconnect = () => {
+      setConnected(false);
+      console.log("Socket disconnected");
+    };
+
     const receiveHandler = (payload) => setMessages((prev) => [...prev, payload]);
     const historyHandler = (history) => setMessages(history);
     
-    socket.on("connect", () => console.log("Socket connected:", socket.id));
-    socket.on("connect_error", (err) => console.error("Socket connection error:", err));
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+      setConnected(false);
+    });
+
     socket.on("receive_message", receiveHandler);
     socket.on("chat_history", historyHandler);
     socket.on("chat_error", (payload) => {
       console.error("Chat error:", payload);
       setError(payload?.message || "Chat error");
     });
+
+    // If already connected, join immediately
+    if (socket.connected) {
+      onConnect();
+    }
 
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -37,9 +59,11 @@ function ChatPanel({ matchId }) {
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
       socket.off("receive_message", receiveHandler);
       socket.off("chat_history", historyHandler);
-      socket.off("chat_error", errorHandler);
+      socket.off("chat_error");
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [matchId, user?.username]);
@@ -69,8 +93,14 @@ function ChatPanel({ matchId }) {
 
   return (
     <div className="flex h-full max-h-[700px] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-xl shadow-cyan-950/20 sm:min-h-[700px]">
-      <div className="p-4 sm:p-5 pb-2 sm:pb-3 shrink-0">
+      <div className="flex items-center justify-between p-4 sm:p-5 pb-2 sm:pb-3 shrink-0">
         <h3 className="text-lg font-bold text-slate-100 sm:text-xl">Match Chat</h3>
+        <div className="flex items-center gap-1.5">
+          <div className={`h-2 w-2 rounded-full ${connected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-red-500'}`} />
+          <span className={`text-[10px] font-bold uppercase tracking-wider ${connected ? 'text-emerald-400' : 'text-red-400'}`}>
+            {connected ? 'Live' : 'Disconnected'}
+          </span>
+        </div>
       </div>
 
       <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto px-4 sm:px-5 py-2 custom-scrollbar">
