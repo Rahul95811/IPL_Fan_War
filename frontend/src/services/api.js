@@ -14,19 +14,19 @@ api.interceptors.request.use((config) => {
 });
 
 export const authApi = {
-  register: (payload) => api.post("/auth/register", payload),
-  login: (payload) => api.post("/auth/login", payload),
-  guestLogin: (payload) => api.post("/auth/guest", payload),
+  register: (payload) => api.post("/api/auth/register", payload),
+  login: (payload) => api.post("/api/auth/login", payload),
+  guestLogin: (payload) => api.post("/api/auth/guest", payload),
 };
 
 export const matchApi = {
-  getLiveMatches: () => api.get("/matches/live"),
-  getMatchById: (id) => api.get(`/matches/${id}`),
+  getLiveMatches: () => api.get("/api/matches/live"),
+  getMatchById: (id) => api.get(`/api/matches/${id}`),
 };
 
 export const voteApi = {
-  submitVote: (payload) => api.post("/vote", payload),
-  getStats: (matchId) => api.get(`/vote/${matchId}`),
+  submitVote: (payload) => api.post("/api/vote", payload),
+  getStats: (matchId) => api.get(`/api/vote/${matchId}`),
 };
 
 api.interceptors.response.use(
