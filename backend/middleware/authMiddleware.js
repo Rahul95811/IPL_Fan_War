@@ -9,7 +9,10 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "fallback_secret_for_dev_only"
+    );
     req.user = { id: decoded.id, username: decoded.username };
     return next();
   } catch (error) {
