@@ -4,7 +4,11 @@ const chatSchema = new mongoose.Schema({
   matchId: { type: String, required: true, index: true },
   username: { type: String, required: true },
   message: { type: String, required: true },
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
+  reactions: {
+    thumbsUp: { type: Number, default: 0 },
+    fire: { type: Number, default: 0 }
+  }
 });
 
 // Auto-delete chats older than 24 hours to save space (86400 seconds)

@@ -41,6 +41,13 @@ function ChatPanel({ matchId }) {
 
     socket.on("receive_message", receiveHandler);
     socket.on("chat_history", historyHandler);
+    socket.on("update_message_reactions", ({ messageId, reactions }) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          (msg._id === messageId || msg.id === messageId) ? { ...msg, reactions } : msg
+        )
+      );
+    });
     socket.on("chat_error", (payload) => {
       console.error("Chat error:", payload);
       setError(payload?.message || "Chat error");
@@ -84,6 +91,10 @@ function ChatPanel({ matchId }) {
     setInput((prev) => prev + emoji);
   };
 
+  const reactToMessage = (messageId, type) => {
+    socket.emit("react_message", { messageId, type });
+  };
+
   const getTimeAgo = (timestamp) => {
     const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
     if (seconds < 60) return "Just now";
@@ -119,11 +130,17 @@ function ChatPanel({ matchId }) {
                 </div>
                 <p className="text-xs leading-relaxed text-slate-200 sm:text-sm">{msg.message}</p>
                 <div className="mt-1.5 sm:mt-2 flex gap-3">
-                  <button className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-cyan-400 sm:text-[10px]">
-                    <span className="text-xs sm:text-sm">👍</span> 0
+                  <button 
+                    onClick={() => reactToMessage(msg._id || msg.id, 'thumbsUp')}
+                    className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-cyan-400 sm:text-[10px]"
+                  >
+                    <span className="text-xs sm:text-sm">👍</span> {msg.reactions?.thumbsUp || 0}
                   </button>
-                  <button className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-amber-400 sm:text-[10px]">
-                    <span className="text-xs sm:text-sm">🔥</span> 0
+                  <button 
+                    onClick={() => reactToMessage(msg._id || msg.id, 'fire')}
+                    className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-amber-400 sm:text-[10px]"
+                  >
+                    <span className="text-xs sm:text-sm">🔥</span> {msg.reactions?.fire || 0}
                   </button>
                 </div>
               </div>

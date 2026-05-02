@@ -128,13 +128,33 @@ io.on("connection", (socket) => {
       });
 
       io.to(matchId).emit("receive_message", {
+        id: newChat._id,
         username: newChat.username,
         message: newChat.message,
         timestamp: newChat.timestamp,
+        reactions: newChat.reactions
       });
     } catch (error) {
       console.error("Failed to save chat:", error);
       socket.emit("chat_error", { message: `Failed to send message: ${error.message}` });
+    }
+  });
+
+  socket.on("react_message", async ({ messageId, type }) => {
+    if (!messageId || !["thumbsUp", "fire"].includes(type)) return;
+
+    try {
+      const update = type === "thumbsUp" ? { $inc: { "reactions.thumbsUp": 1 } } : { $inc: { "reactions.fire": 1 } };
+      const updatedChat = await Chat.findByIdAndUpdate(messageId, update, { new: true });
+      
+      if (updatedChat) {
+        io.to(updatedChat.matchId).emit("update_message_reactions", {
+          messageId: updatedChat._id,
+          reactions: updatedChat.reactions
+        });
+      }
+    } catch (error) {
+      console.error("Failed to react to message:", error);
     }
   });
 
