@@ -30,7 +30,7 @@ const allowedOrigins = [
 
 const io = new Server(server, {
   cors: {
-    origin: true,
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
