@@ -1,0 +1,46 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "IPL Fan War backend service",
+  "main": "server.js",
+  "scripts": {
+    "predev": "npx kill-port 5000 || cmd /c \"exit 0\"",
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "scraper/test_match.html",
+      "scraper/debug_*.html",
+      "*.log",
+      "final_test.json"
+    ],
+    "delay": 2
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.15.1",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
+    "cors": "^2.8.6",
+    "cricbuzz-scraper": "^1.1.0",
+    "cricket-live-api": "^1.0.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.5.0",
+    "morgan": "^1.10.1",
+    "node-cache": "^5.1.2",
+    "sanitize-html": "^2.17.3",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
