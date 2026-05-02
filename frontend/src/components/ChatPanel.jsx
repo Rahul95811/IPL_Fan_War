@@ -92,6 +92,23 @@ function ChatPanel({ matchId }) {
   };
 
   const reactToMessage = (messageId, type) => {
+    // Optimistic Update: update UI immediately for better responsiveness
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg._id === messageId || msg.id === messageId) {
+          const currentReactions = msg.reactions || { thumbsUp: 0, fire: 0 };
+          return {
+            ...msg,
+            reactions: {
+              ...currentReactions,
+              [type]: (currentReactions[type] || 0) + 1,
+            },
+          };
+        }
+        return msg;
+      })
+    );
+
     socket.emit("react_message", { messageId, type });
   };
 
