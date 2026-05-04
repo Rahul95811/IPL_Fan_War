@@ -12,6 +12,11 @@ const chatSchema = new mongoose.Schema({
       username: String,
       type: String
     }]
+  },
+  replyTo: {
+    username: String,
+    message: String,
+    messageId: String
   }
 });
 

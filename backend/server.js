@@ -96,7 +96,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("send_message", async ({ matchId, message }) => {
+  socket.on("send_message", async ({ matchId, message, replyTo }) => {
     if (!matchId || !message || socket.data.matchId != matchId) {
       console.log("Message dropped:", { incomingId: matchId, savedId: socket.data.matchId });
       return;
@@ -127,14 +127,16 @@ io.on("connection", (socket) => {
       const newChat = await Chat.create({
         matchId,
         username: socket.data.username,
-        message: cleanMessage
+        message: cleanMessage,
+        replyTo: replyTo || null
       });
 
       io.to(matchId).emit("receive_message", {
         id: newChat._id.toString(),
         username: newChat.username,
         message: newChat.message,
-        timestamp: newChat.timestamp
+        timestamp: newChat.timestamp,
+        replyTo: newChat.replyTo
       });
     } catch (error) {
       console.error("Failed to save chat:", error);

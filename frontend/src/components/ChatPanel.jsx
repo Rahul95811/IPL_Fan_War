@@ -9,8 +9,11 @@ function ChatPanel({ matchId }) {
   const [input, setInput] = useState("");
   const [error, setError] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
   const chatEndRef = useRef(null);
   const dropdownRef = useRef(null);
+  const touchStartRef = useRef(0);
+  const swipeMessageIdRef = useRef(null);
 
   const [connected, setConnected] = useState(socket.connected);
 
@@ -46,7 +49,6 @@ function ChatPanel({ matchId }) {
       setError(payload?.message || "Chat error");
     });
 
-    // If already connected, join immediately
     if (socket.connected) {
       onConnect();
     }
@@ -75,13 +77,40 @@ function ChatPanel({ matchId }) {
   const sendMessage = (event) => {
     event.preventDefault();
     if (!input.trim() || !matchId) return;
-    socket.emit("send_message", { matchId, message: input.trim() });
+    
+    const replyData = replyingTo ? {
+      username: replyingTo.username,
+      message: replyingTo.message,
+      messageId: String(replyingTo._id || replyingTo.id)
+    } : null;
+
+    socket.emit("send_message", { matchId, message: input.trim(), replyTo: replyData });
     setInput("");
     setShowEmojiPicker(false);
+    setReplyingTo(null);
   };
 
   const addEmoji = (emoji) => {
     setInput((prev) => prev + emoji);
+  };
+
+  const handleTouchStart = (e, msg) => {
+    touchStartRef.current = e.touches[0].clientX;
+    swipeMessageIdRef.current = String(msg._id || msg.id);
+  };
+
+  const handleTouchEnd = (e, msg) => {
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchEnd - touchStartRef.current;
+    
+    // Detect right swipe (threshold of 50px)
+    if (diff > 50) {
+      setReplyingTo(msg);
+      // Brief haptic-like visual feedback could be added here
+    }
+    
+    touchStartRef.current = 0;
+    swipeMessageIdRef.current = null;
   };
 
   const getTimeAgo = (timestamp) => {
@@ -112,7 +141,12 @@ function ChatPanel({ matchId }) {
           messages.map((msg, index) => {
             const isOwnMessage = msg.username === user?.username;
             return (
-              <div key={`${msg.timestamp}-${index}`} className={`flex items-start gap-2 sm:gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+              <div 
+                key={`${msg.timestamp}-${index}`} 
+                className={`flex items-start gap-2 sm:gap-3 transition-transform active:translate-x-4 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
+                onTouchStart={(e) => handleTouchStart(e, msg)}
+                onTouchEnd={(e) => handleTouchEnd(e, msg)}
+              >
                 <img 
                   src={`https://ui-avatars.com/api/?name=${msg.username}&background=${isOwnMessage ? '6366f1' : '0f172a'}&color=ffffff`} 
                   alt="avatar" 
@@ -129,6 +163,15 @@ function ChatPanel({ matchId }) {
                     </p>
                     <p className="text-[9px] font-medium text-slate-500 sm:text-[10px]">{getTimeAgo(msg.timestamp)}</p>
                   </div>
+                  
+                  {/* Replied Message Preview */}
+                  {msg.replyTo && (
+                    <div className={`mb-2 rounded-lg border-l-4 bg-black/20 p-2 text-[10px] sm:text-xs ${isOwnMessage ? 'border-indigo-500 text-right' : 'border-cyan-500'}`}>
+                      <p className="font-bold opacity-70">{msg.replyTo.username === user?.username ? 'You' : msg.replyTo.username}</p>
+                      <p className="truncate italic opacity-60">{msg.replyTo.message}</p>
+                    </div>
+                  )}
+
                   <p className={`text-xs leading-relaxed sm:text-sm ${isOwnMessage ? 'text-slate-100 text-right' : 'text-slate-200'}`}>
                     {msg.message}
                   </p>
@@ -140,15 +183,34 @@ function ChatPanel({ matchId }) {
         <div ref={chatEndRef} />
       </div>
 
-      <div className="shrink-0 border-t border-slate-700 p-3 pt-2 sm:p-4">
+      <div className="shrink-0 border-t border-slate-700 bg-slate-900/80 backdrop-blur-sm p-3 pt-2 sm:p-4">
+        {/* Reply Selection Bar */}
+        {replyingTo && (
+          <div className="mb-2 flex items-center justify-between rounded-lg border border-slate-700 bg-slate-800/50 p-2 shadow-inner">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <div className="h-8 w-1 shrink-0 rounded-full bg-cyan-500" />
+              <div className="overflow-hidden">
+                <p className="text-[10px] font-bold text-cyan-400">Replying to {replyingTo.username}</p>
+                <p className="truncate text-xs text-slate-400">{replyingTo.message}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setReplyingTo(null)}
+              className="ml-2 rounded-full p-1 text-slate-500 hover:bg-slate-700 hover:text-slate-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        )}
+
         <form onSubmit={sendMessage} className="relative">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Type your message..."
+            placeholder={replyingTo ? "Type your reply..." : "Type your message..."}
             className="w-full rounded-full border border-slate-700 bg-slate-800 px-4 py-2.5 pr-20 text-xs text-slate-100 placeholder-slate-500 outline-none transition focus:border-cyan-500 focus:bg-slate-800 focus:shadow-md sm:px-5 sm:py-3.5 sm:pr-24 sm:text-sm"
           />
-          <div className="absolute right-1 sm:right-1.5 top-1 sm:top-1.5 flex items-center gap-0.5 sm:gap-1" ref={dropdownRef}>
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-1" ref={dropdownRef}>
             {showEmojiPicker && (
               <EmojiPicker 
                 onEmojiSelect={addEmoji} 
