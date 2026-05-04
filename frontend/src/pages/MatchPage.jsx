@@ -59,16 +59,34 @@ function MatchPage() {
             }
           : prev
       );
-      setCountdown(2); // Reset countdown on socket update
+    const handleVoteUpdate = (data) => {
+      if (data.matchId && data.matchId !== matchId) return;
+      setVoteStats({ totalVotes: data.totalVotes, percentages: data.percentages });
     };
-    if (!socket.connected) socket.connect();
-    socket.on("score_update", handleScoreUpdate);
 
+    const onConnect = () => {
+      socket.emit("join_match", { matchId });
+    };
+
+    if (!socket.connected) {
+      socket.connect();
+    } else {
+      onConnect();
+    }
+
+    socket.on("connect", onConnect);
+    socket.on("score_update", handleScoreUpdate);
+    socket.on("vote_update", handleVoteUpdate);
+
+    setCountdown(2); // Initial reset
+    
     return () => {
       clearTimeout(initTimer);
       clearInterval(interval);
       clearInterval(timer);
+      socket.off("connect", onConnect);
       socket.off("score_update", handleScoreUpdate);
+      socket.off("vote_update", handleVoteUpdate);
     };
   }, [fetchMatchDetails, fetchVoteStats, matchId]);
 

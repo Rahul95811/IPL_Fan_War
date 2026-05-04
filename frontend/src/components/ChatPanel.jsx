@@ -21,7 +21,7 @@ function ChatPanel({ matchId }) {
     const onConnect = () => {
       setConnected(true);
       console.log("Socket connected:", socket.id);
-      socket.emit("join_match", { matchId, username: user.username });
+      socket.emit("join_match", { matchId, username: user?.username });
     };
 
     const onDisconnect = () => {

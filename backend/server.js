@@ -35,6 +35,8 @@ const io = new Server(server, {
   },
 });
 
+app.set("io", io);
+
 app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
@@ -75,12 +77,12 @@ const WINDOW_MS = 10 * 1000;
 
 io.on("connection", (socket) => {
   socket.on("join_match", async ({ matchId, username }) => {
-    if (!matchId || !username) {
-      return;
-    }
+    if (!matchId) return;
+    
     socket.data.matchId = matchId;
-    socket.data.username = username;
+    socket.data.username = username || `Guest_${socket.id.substring(0, 5)}`;
     socket.join(matchId);
+    console.log(`Socket ${socket.id} joined match ${matchId} as ${socket.data.username}`);
 
     try {
       const history = await Chat.find({ matchId })

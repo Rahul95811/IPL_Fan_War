@@ -23,13 +23,24 @@ const submitVote = async (req, res, next) => {
       return acc;
     }, {});
 
+    const percentages = Object.entries(teamVotes).reduce((acc, [key, count]) => {
+      acc[key] = Number(((count / total) * 100).toFixed(1));
+      return acc;
+    }, {});
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to(matchId).emit("vote_update", {
+        matchId,
+        totalVotes: total,
+        percentages
+      });
+    }
+
     return res.status(201).json({
       message: "Vote submitted",
       totalVotes: total,
-      percentages: Object.entries(teamVotes).reduce((acc, [key, count]) => {
-        acc[key] = Number(((count / total) * 100).toFixed(1));
-        return acc;
-      }, {}),
+      percentages,
     });
   } catch (error) {
     return next(error);
