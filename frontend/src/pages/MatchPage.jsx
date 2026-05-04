@@ -59,6 +59,8 @@ function MatchPage() {
             }
           : prev
       );
+    };
+
     const handleVoteUpdate = (data) => {
       if (data.matchId && data.matchId !== matchId) return;
       setVoteStats({ totalVotes: data.totalVotes, percentages: data.percentages });
