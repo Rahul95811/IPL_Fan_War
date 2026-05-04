@@ -160,17 +160,20 @@ io.on("connection", (socket) => {
     if (!messageId || !["thumbsUp", "fire"].includes(type) || !socket.data.username) return;
 
     try {
-      const chat = await Chat.findById(messageId);
-      if (!chat) return;
+      // Atomic update: only update if user hasn't reacted yet
+      const chat = await Chat.findOneAndUpdate(
+        { 
+          _id: messageId, 
+          "reactions.userReactions.username": { $ne: socket.data.username } 
+        },
+        {
+          $inc: { [`reactions.${type}`]: 1 },
+          $push: { "reactions.userReactions": { username: socket.data.username, type } }
+        },
+        { new: true }
+      );
 
-      // Check if user already reacted to THIS message
-      const alreadyReacted = chat.reactions.userReactions.some(r => r.username === socket.data.username);
-      if (alreadyReacted) return;
-
-      // Update count and track user
-      chat.reactions[type] += 1;
-      chat.reactions.userReactions.push({ username: socket.data.username, type });
-      await chat.save();
+      if (!chat) return; // Already reacted or not found
       
       io.to(chat.matchId).emit("update_message_reactions", {
         messageId: chat._id.toString(),

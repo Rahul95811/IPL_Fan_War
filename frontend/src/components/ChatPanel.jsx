@@ -72,6 +72,7 @@ function ChatPanel({ matchId }) {
       socket.off("disconnect", onDisconnect);
       socket.off("receive_message", receiveHandler);
       socket.off("chat_history", historyHandler);
+      socket.off("update_message_reactions");
       socket.off("chat_error");
       document.removeEventListener("mousedown", handleClickOutside);
     };
