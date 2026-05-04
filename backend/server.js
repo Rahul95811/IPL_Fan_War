@@ -90,6 +90,7 @@ io.on("connection", (socket) => {
       
       const historyWithReactions = history.map(h => ({
         ...h,
+        _id: h._id.toString(),
         reactions: {
           thumbsUp: h.reactions.thumbsUp,
           fire: h.reactions.fire,
@@ -137,7 +138,7 @@ io.on("connection", (socket) => {
       });
 
       io.to(matchId).emit("receive_message", {
-        id: newChat._id,
+        id: newChat._id.toString(),
         username: newChat.username,
         message: newChat.message,
         timestamp: newChat.timestamp,
@@ -170,7 +171,7 @@ io.on("connection", (socket) => {
       await chat.save();
       
       io.to(chat.matchId).emit("update_message_reactions", {
-        messageId: chat._id,
+        messageId: chat._id.toString(),
         reactions: {
           thumbsUp: chat.reactions.thumbsUp,
           fire: chat.reactions.fire,

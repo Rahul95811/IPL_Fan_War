@@ -43,9 +43,11 @@ function ChatPanel({ matchId }) {
     socket.on("chat_history", historyHandler);
     socket.on("update_message_reactions", ({ messageId, reactions }) => {
       setMessages((prev) =>
-        prev.map((msg) =>
-          (msg._id === messageId || msg.id === messageId) ? { ...msg, reactions } : msg
-        )
+        prev.map((msg) => {
+          const msgId = String(msg._id || msg.id);
+          const targetId = String(messageId);
+          return msgId === targetId ? { ...msg, reactions } : msg;
+        })
       );
     });
     socket.on("chat_error", (payload) => {
@@ -92,7 +94,7 @@ function ChatPanel({ matchId }) {
   };
 
   const reactToMessage = (messageId, type) => {
-    const msg = messages.find(m => m._id === messageId || m.id === messageId);
+    const msg = messages.find(m => String(m._id || m.id) === String(messageId));
     if (!msg) return;
 
     const alreadyReacted = msg.reactions?.userReactions?.some(r => r.username === user?.username);
@@ -101,7 +103,9 @@ function ChatPanel({ matchId }) {
     // Optimistic Update
     setMessages((prev) =>
       prev.map((m) => {
-        if (m._id === messageId || m.id === messageId) {
+        const mId = String(m._id || m.id);
+        const targetId = String(messageId);
+        if (mId === targetId) {
           const currentReactions = m.reactions || { thumbsUp: 0, fire: 0, userReactions: [] };
           return {
             ...m,
@@ -116,7 +120,7 @@ function ChatPanel({ matchId }) {
       })
     );
 
-    socket.emit("react_message", { messageId, type });
+    socket.emit("react_message", { messageId: String(messageId), type });
   };
 
   const getTimeAgo = (timestamp) => {
