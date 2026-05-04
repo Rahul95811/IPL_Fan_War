@@ -11,7 +11,7 @@ function MatchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [voteStats, setVoteStats] = useState({ totalVotes: 0, percentages: {} });
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(2);
 
   const fetchMatchDetails = useCallback(async () => {
     try {
@@ -42,9 +42,9 @@ function MatchPage() {
 
     const interval = setInterval(() => {
       fetchMatchDetails();
-    }, 3000);
+    }, 2000);
     const timer = setInterval(() => {
-      setCountdown(prev => (prev <= 1 ? 3 : prev - 1));
+      setCountdown(prev => (prev <= 1 ? 2 : prev - 1));
     }, 1000);
 
     // Keep live updates in React state and avoid DOM mutations.
@@ -59,7 +59,7 @@ function MatchPage() {
             }
           : prev
       );
-      setCountdown(3); // Reset countdown on socket update
+      setCountdown(2); // Reset countdown on socket update
     };
     if (!socket.connected) socket.connect();
     socket.on("score_update", handleScoreUpdate);

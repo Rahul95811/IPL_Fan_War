@@ -21,7 +21,7 @@ function HomePage() {
 
   useEffect(() => {
     fetchMatches();
-    const interval = setInterval(fetchMatches, 3000);
+    const interval = setInterval(fetchMatches, 2000);
     return () => clearInterval(interval);
   }, []);
 

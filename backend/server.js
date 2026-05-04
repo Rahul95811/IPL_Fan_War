@@ -87,7 +87,16 @@ io.on("connection", (socket) => {
         .sort({ timestamp: -1 })
         .limit(50)
         .lean();
-      socket.emit("chat_history", history.reverse());
+      
+      const historyWithReactions = history.map(h => ({
+        ...h,
+        reactions: {
+          thumbsUp: h.reactions.thumbsUp,
+          fire: h.reactions.fire,
+          userReactions: h.reactions.userReactions || []
+        }
+      }));
+      socket.emit("chat_history", historyWithReactions.reverse());
     } catch (error) {
       console.error("Failed to fetch chat history:", error);
     }
@@ -132,7 +141,11 @@ io.on("connection", (socket) => {
         username: newChat.username,
         message: newChat.message,
         timestamp: newChat.timestamp,
-        reactions: newChat.reactions
+        reactions: {
+          thumbsUp: newChat.reactions.thumbsUp,
+          fire: newChat.reactions.fire,
+          userReactions: []
+        }
       });
     } catch (error) {
       console.error("Failed to save chat:", error);
@@ -141,18 +154,29 @@ io.on("connection", (socket) => {
   });
 
   socket.on("react_message", async ({ messageId, type }) => {
-    if (!messageId || !["thumbsUp", "fire"].includes(type)) return;
+    if (!messageId || !["thumbsUp", "fire"].includes(type) || !socket.data.username) return;
 
     try {
-      const update = type === "thumbsUp" ? { $inc: { "reactions.thumbsUp": 1 } } : { $inc: { "reactions.fire": 1 } };
-      const updatedChat = await Chat.findByIdAndUpdate(messageId, update, { new: true });
+      const chat = await Chat.findById(messageId);
+      if (!chat) return;
+
+      // Check if user already reacted to THIS message
+      const alreadyReacted = chat.reactions.userReactions.some(r => r.username === socket.data.username);
+      if (alreadyReacted) return;
+
+      // Update count and track user
+      chat.reactions[type] += 1;
+      chat.reactions.userReactions.push({ username: socket.data.username, type });
+      await chat.save();
       
-      if (updatedChat) {
-        io.to(updatedChat.matchId).emit("update_message_reactions", {
-          messageId: updatedChat._id,
-          reactions: updatedChat.reactions
-        });
-      }
+      io.to(chat.matchId).emit("update_message_reactions", {
+        messageId: chat._id,
+        reactions: {
+          thumbsUp: chat.reactions.thumbsUp,
+          fire: chat.reactions.fire,
+          userReactions: chat.reactions.userReactions
+        }
+      });
     } catch (error) {
       console.error("Failed to react to message:", error);
     }

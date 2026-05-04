@@ -10,7 +10,7 @@ const httpsAgent = new https.Agent({
   maxFreeSockets: 5
 });
 
-const matchCache = new NodeCache({ stdTTL: 4 });
+const matchCache = new NodeCache({ stdTTL: 1 });
 const IPL_FILTER_RE = /(ipl|indian[- ]premier[- ]league)/i;
 const IPL_FIXTURES_URL = "https://www.cricbuzz.com/cricket-series/9241/indian-premier-league-2026/matches";
 const COMPLETED_STATUS_RE = /(won|abandoned|no result|tied)/i;
@@ -157,7 +157,7 @@ const getLiveMatches = async (req, res, next) => {
       count: filteredMatches.length
     };
 
-    matchCache.set("fixture_payload", finalPayload, 5);
+    matchCache.set("fixture_payload", finalPayload, 1);
 
     return res.json({
       source: "cricbuzz-relevant-matches",
@@ -298,7 +298,7 @@ const getMatchById = async (req, res, next) => {
       }]
     };
 
-    matchCache.set(cacheKey, matchDetails, 3);
+    matchCache.set(cacheKey, matchDetails, 1);
     return res.json({ source: "cricbuzz", match: matchDetails });
   } catch (error) {
     if (matchCache.has(`match_${req.params.id}`)) {

@@ -7,7 +7,11 @@ const chatSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   reactions: {
     thumbsUp: { type: Number, default: 0 },
-    fire: { type: Number, default: 0 }
+    fire: { type: Number, default: 0 },
+    userReactions: [{
+      username: String,
+      type: String
+    }]
   }
 });
 

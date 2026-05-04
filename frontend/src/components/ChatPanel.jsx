@@ -92,20 +92,27 @@ function ChatPanel({ matchId }) {
   };
 
   const reactToMessage = (messageId, type) => {
-    // Optimistic Update: update UI immediately for better responsiveness
+    const msg = messages.find(m => m._id === messageId || m.id === messageId);
+    if (!msg) return;
+
+    const alreadyReacted = msg.reactions?.userReactions?.some(r => r.username === user?.username);
+    if (alreadyReacted) return;
+
+    // Optimistic Update
     setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg._id === messageId || msg.id === messageId) {
-          const currentReactions = msg.reactions || { thumbsUp: 0, fire: 0 };
+      prev.map((m) => {
+        if (m._id === messageId || m.id === messageId) {
+          const currentReactions = m.reactions || { thumbsUp: 0, fire: 0, userReactions: [] };
           return {
-            ...msg,
+            ...m,
             reactions: {
               ...currentReactions,
               [type]: (currentReactions[type] || 0) + 1,
+              userReactions: [...(currentReactions.userReactions || []), { username: user?.username, type }]
             },
           };
         }
-        return msg;
+        return m;
       })
     );
 
@@ -163,13 +170,27 @@ function ChatPanel({ matchId }) {
                   <div className={`mt-1.5 sm:mt-2 flex gap-3 ${isOwnMessage ? 'justify-end' : ''}`}>
                     <button 
                       onClick={() => reactToMessage(msg._id || msg.id, 'thumbsUp')}
-                      className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-cyan-400 sm:text-[10px]"
+                      disabled={msg.reactions?.userReactions?.some(r => r.username === user?.username)}
+                      className={`flex items-center gap-1 text-[9px] font-medium transition sm:text-[10px] ${
+                        msg.reactions?.userReactions?.some(r => r.username === user?.username && r.type === 'thumbsUp')
+                          ? 'text-cyan-400 bg-cyan-400/10 rounded px-1'
+                          : msg.reactions?.userReactions?.some(r => r.username === user?.username)
+                            ? 'text-slate-600 cursor-not-allowed'
+                            : 'text-slate-500 hover:text-cyan-400'
+                      }`}
                     >
                       <span className="text-xs sm:text-sm">👍</span> {msg.reactions?.thumbsUp || 0}
                     </button>
                     <button 
                       onClick={() => reactToMessage(msg._id || msg.id, 'fire')}
-                      className="flex items-center gap-1 text-[9px] font-medium text-slate-500 transition hover:text-amber-400 sm:text-[10px]"
+                      disabled={msg.reactions?.userReactions?.some(r => r.username === user?.username)}
+                      className={`flex items-center gap-1 text-[9px] font-medium transition sm:text-[10px] ${
+                        msg.reactions?.userReactions?.some(r => r.username === user?.username && r.type === 'fire')
+                          ? 'text-amber-400 bg-amber-400/10 rounded px-1'
+                          : msg.reactions?.userReactions?.some(r => r.username === user?.username)
+                            ? 'text-slate-600 cursor-not-allowed'
+                            : 'text-slate-500 hover:text-amber-400'
+                      }`}
                     >
                       <span className="text-xs sm:text-sm">🔥</span> {msg.reactions?.fire || 0}
                     </button>
