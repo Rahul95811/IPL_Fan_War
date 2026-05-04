@@ -41,15 +41,6 @@ function ChatPanel({ matchId }) {
 
     socket.on("receive_message", receiveHandler);
     socket.on("chat_history", historyHandler);
-    socket.on("update_message_reactions", ({ messageId, reactions }) => {
-      setMessages((prev) =>
-        prev.map((msg) => {
-          const msgId = String(msg._id || msg.id);
-          const targetId = String(messageId);
-          return msgId === targetId ? { ...msg, reactions } : msg;
-        })
-      );
-    });
     socket.on("chat_error", (payload) => {
       console.error("Chat error:", payload);
       setError(payload?.message || "Chat error");
@@ -72,7 +63,6 @@ function ChatPanel({ matchId }) {
       socket.off("disconnect", onDisconnect);
       socket.off("receive_message", receiveHandler);
       socket.off("chat_history", historyHandler);
-      socket.off("update_message_reactions");
       socket.off("chat_error");
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -92,36 +82,6 @@ function ChatPanel({ matchId }) {
 
   const addEmoji = (emoji) => {
     setInput((prev) => prev + emoji);
-  };
-
-  const reactToMessage = (messageId, type) => {
-    const msg = messages.find(m => String(m._id || m.id) === String(messageId));
-    if (!msg) return;
-
-    const alreadyReacted = msg.reactions?.userReactions?.some(r => r.username === user?.username);
-    if (alreadyReacted) return;
-
-    // Optimistic Update
-    setMessages((prev) =>
-      prev.map((m) => {
-        const mId = String(m._id || m.id);
-        const targetId = String(messageId);
-        if (mId === targetId) {
-          const currentReactions = m.reactions || { thumbsUp: 0, fire: 0, userReactions: [] };
-          return {
-            ...m,
-            reactions: {
-              ...currentReactions,
-              [type]: (currentReactions[type] || 0) + 1,
-              userReactions: [...(currentReactions.userReactions || []), { username: user?.username, type }]
-            },
-          };
-        }
-        return m;
-      })
-    );
-
-    socket.emit("react_message", { messageId: String(messageId), type });
   };
 
   const getTimeAgo = (timestamp) => {
@@ -172,34 +132,6 @@ function ChatPanel({ matchId }) {
                   <p className={`text-xs leading-relaxed sm:text-sm ${isOwnMessage ? 'text-slate-100 text-right' : 'text-slate-200'}`}>
                     {msg.message}
                   </p>
-                  <div className={`mt-1.5 sm:mt-2 flex gap-3 ${isOwnMessage ? 'justify-end' : ''}`}>
-                    <button 
-                      onClick={() => reactToMessage(msg._id || msg.id, 'thumbsUp')}
-                      disabled={msg.reactions?.userReactions?.some(r => r.username === user?.username)}
-                      className={`flex items-center gap-1 text-[9px] font-medium transition sm:text-[10px] ${
-                        msg.reactions?.userReactions?.some(r => r.username === user?.username && r.type === 'thumbsUp')
-                          ? 'text-cyan-400 bg-cyan-400/10 rounded px-1'
-                          : msg.reactions?.userReactions?.some(r => r.username === user?.username)
-                            ? 'text-slate-600 cursor-not-allowed'
-                            : 'text-slate-500 hover:text-cyan-400'
-                      }`}
-                    >
-                      <span className="text-xs sm:text-sm">👍</span> {msg.reactions?.thumbsUp || 0}
-                    </button>
-                    <button 
-                      onClick={() => reactToMessage(msg._id || msg.id, 'fire')}
-                      disabled={msg.reactions?.userReactions?.some(r => r.username === user?.username)}
-                      className={`flex items-center gap-1 text-[9px] font-medium transition sm:text-[10px] ${
-                        msg.reactions?.userReactions?.some(r => r.username === user?.username && r.type === 'fire')
-                          ? 'text-amber-400 bg-amber-400/10 rounded px-1'
-                          : msg.reactions?.userReactions?.some(r => r.username === user?.username)
-                            ? 'text-slate-600 cursor-not-allowed'
-                            : 'text-slate-500 hover:text-amber-400'
-                      }`}
-                    >
-                      <span className="text-xs sm:text-sm">🔥</span> {msg.reactions?.fire || 0}
-                    </button>
-                  </div>
                 </div>
               </div>
             );

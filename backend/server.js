@@ -90,16 +90,7 @@ io.on("connection", (socket) => {
         .limit(50)
         .lean();
       
-      const historyWithReactions = history.map(h => ({
-        ...h,
-        _id: h._id.toString(),
-        reactions: {
-          thumbsUp: h.reactions.thumbsUp,
-          fire: h.reactions.fire,
-          userReactions: h.reactions.userReactions || []
-        }
-      }));
-      socket.emit("chat_history", historyWithReactions.reverse());
+      socket.emit("chat_history", history.reverse());
     } catch (error) {
       console.error("Failed to fetch chat history:", error);
     }
@@ -143,12 +134,7 @@ io.on("connection", (socket) => {
         id: newChat._id.toString(),
         username: newChat.username,
         message: newChat.message,
-        timestamp: newChat.timestamp,
-        reactions: {
-          thumbsUp: newChat.reactions.thumbsUp,
-          fire: newChat.reactions.fire,
-          userReactions: []
-        }
+        timestamp: newChat.timestamp
       });
     } catch (error) {
       console.error("Failed to save chat:", error);
@@ -156,37 +142,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("react_message", async ({ messageId, type }) => {
-    if (!messageId || !["thumbsUp", "fire"].includes(type) || !socket.data.username) return;
 
-    try {
-      // Atomic update: only update if user hasn't reacted yet
-      const chat = await Chat.findOneAndUpdate(
-        { 
-          _id: messageId, 
-          "reactions.userReactions.username": { $ne: socket.data.username } 
-        },
-        {
-          $inc: { [`reactions.${type}`]: 1 },
-          $push: { "reactions.userReactions": { username: socket.data.username, type } }
-        },
-        { new: true }
-      );
-
-      if (!chat) return; // Already reacted or not found
-      
-      io.to(chat.matchId).emit("update_message_reactions", {
-        messageId: chat._id.toString(),
-        reactions: {
-          thumbsUp: chat.reactions.thumbsUp,
-          fire: chat.reactions.fire,
-          userReactions: chat.reactions.userReactions
-        }
-      });
-    } catch (error) {
-      console.error("Failed to react to message:", error);
-    }
-  });
 
   socket.on("disconnect", () => {
     messageRateState.delete(socket.id);
