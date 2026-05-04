@@ -53,10 +53,10 @@ function MatchPage() {
       setMatchData((prev) =>
         prev
           ? {
-              ...prev,
-              score: [{ r: data.runs || prev.score?.[0]?.r, w: data.wickets || prev.score?.[0]?.w, o: data.overs || prev.score?.[0]?.o }],
-              status: data.status || prev.status,
-            }
+            ...prev,
+            score: [{ r: data.runs || prev.score?.[0]?.r, w: data.wickets || prev.score?.[0]?.w, o: data.overs || prev.score?.[0]?.o }],
+            status: data.status || prev.status,
+          }
           : prev
       );
     };
@@ -81,7 +81,7 @@ function MatchPage() {
     socket.on("vote_update", handleVoteUpdate);
 
     setCountdown(2); // Initial reset
-    
+
     return () => {
       clearTimeout(initTimer);
       clearInterval(interval);

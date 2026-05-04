@@ -113,6 +113,11 @@ function ChatPanel({ matchId }) {
     swipeMessageIdRef.current = null;
   };
 
+  const handleContextMenu = (e, msg) => {
+    e.preventDefault();
+    setReplyingTo(msg);
+  };
+
   const getTimeAgo = (timestamp) => {
     const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
     if (seconds < 60) return "Just now";
@@ -146,6 +151,7 @@ function ChatPanel({ matchId }) {
                 className={`flex items-start gap-2 sm:gap-3 transition-transform active:translate-x-4 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
                 onTouchStart={(e) => handleTouchStart(e, msg)}
                 onTouchEnd={(e) => handleTouchEnd(e, msg)}
+                onContextMenu={(e) => handleContextMenu(e, msg)}
               >
                 <img 
                   src={`https://ui-avatars.com/api/?name=${msg.username}&background=${isOwnMessage ? '6366f1' : '0f172a'}&color=ffffff`} 
